@@ -1,0 +1,309 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>| Knight game |</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        html, body {
+            height: 100%;
+        }
+
+        html {
+            display: table;
+            margin: auto;
+        }
+
+        body {
+            display: table-cell;
+            vertical-align: middle;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 400 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var player;
+var bottles;
+var enemies;
+var platforms;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreText;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('background', 'assets/bg.png');
+    this.load.image('ground', 'assets/dirt.png');
+    this.load.image('head', 'assets/warrior_head.png');
+     
+    this.load.image('brick21', 'assets/brick_b_1.png');
+    this.load.image('brick22', 'assets/brick_b_2.png');
+    this.load.image('brick23', 'assets/brick_b_3.png');
+    this.load.image('brick24', 'assets/brick_b_4.png');
+    this.load.image('brick25', 'assets/brick_b_5.png');
+    this.load.image('potion', 'assets/potion.png');
+    this.load.image('hud', 'assets/hud.png');
+    this.load.image('enemigo1', 'assets/skeleton1.png');
+    this.load.image('zombie', 'assets/zombie.png');
+    this.load.image('enemigo2', 'assets/skeleton2.png');
+    this.load.spritesheet('dude', 'assets/warrior.png', { frameWidth: 32, frameHeight: 40 });
+}
+
+function create ()
+{
+    //Detalles del mapa/marcador
+    this.add.image(400, 300, 'background');
+    this.add.image(70,40, 'hud').setScale(4);
+    this.add.image(35,40, 'head').setScale(3);
+    this.add.image(75,40, 'potion').setScale(1);
+    
+    
+    platforms = this.physics.add.staticGroup();
+
+    // Declaramos las bases principales
+    
+    platforms.create(10, 570, 'ground').setScale(2).refreshBody(); 
+    platforms.create(396, 590, 'ground').setScale(2).refreshBody(); 
+    platforms.create(782, 570, 'ground').setScale(2).refreshBody();
+
+    // Plataformas
+    
+    platforms.create(360, 420, 'brick21').setScale(2).refreshBody(); 
+    platforms.create(220, 470, 'brick21').setScale(2).refreshBody(); 
+    platforms.create(585, 372, 'brick21').setScale(1.3).refreshBody(); 
+    platforms.create(645, 372, 'brick21').setScale(1.3).refreshBody(); 
+
+    platforms.create(535, 302, 'brick21').setScale(1.3).refreshBody(); 
+    platforms.create(480, 520, 'brick21').setScale(2).refreshBody();  
+    platforms.create(385, 520, 'brick21').setScale(2).refreshBody();  
+
+    platforms.create(20, 200, 'brick21').setScale(2).refreshBody();  
+    platforms.create(113, 380, 'brick21').setScale(1.2).refreshBody();  
+    platforms.create(170, 380, 'brick21').setScale(1.2).refreshBody();  
+
+    platforms.create(376, 250, 'brick21').setScale(1.2).refreshBody();  
+    platforms.create(320, 250, 'brick21').setScale(1.2).refreshBody();  
+    platforms.create(432, 250, 'brick21').setScale(1.2).refreshBody(); 
+
+    platforms.create(780, 485, 'brick22').setScale(1.5).refreshBody(); 
+    
+    platforms.create(190,115, 'brick22'); 
+    platforms.create(330,95, 'brick22'); 
+    platforms.create(480,125, 'brick22'); 
+    platforms.create(620,185, 'brick22'); 
+    platforms.create(750,125, 'brick22'); 
+
+    platforms.create(220, 365, 'brick22').setScale(1).refreshBody(); 
+
+    platforms.create(542, 348, 'brick23').setScale(1.5).refreshBody(); 
+
+    platforms.create(282, 248, 'brick23').setScale(1.2).refreshBody(); 
+    platforms.create(470, 248, 'brick23').setScale(1.2).refreshBody(); 
+
+    platforms.create(510, 504, 'brick23').setScale(0.5).refreshBody(); 
+    platforms.create(340, 511, 'brick23').setScale(0.5).refreshBody(); 
+
+    platforms.create(670, 495, 'brick24').setScale(2).refreshBody(); 
+    platforms.create(80, 495, 'brick24').setScale(2).refreshBody();
+    platforms.create(580, 495, 'brick24').setScale(2).refreshBody();
+    platforms.create(490, 444, 'brick24').setScale(1.5).refreshBody();
+    platforms.create(185, 240, 'brick24').setScale(2).refreshBody(); 
+
+    platforms.create(264, 230, 'brick24').setScale(1.2).refreshBody(); 
+    platforms.create(490, 230, 'brick24').setScale(1.2).refreshBody(); 
+
+    platforms.create(665, 310, 'brick24').setScale(1.2).refreshBody(); 
+    platforms.create(515, 270, 'brick24').setScale(1.2).refreshBody(); 
+
+    platforms.create(20, 350, 'brick25').setScale(2).refreshBody();
+    platforms.create(740, 320, 'brick25').setScale(2).refreshBody();
+    
+    // Inicio del jugador
+
+    player = this.physics.add.sprite(30, 490, 'dude');
+    
+    
+    //  Fisicas del jugador
+    player.setBounce(0.2);
+    player.setCollideWorldBounds(true);
+
+    //  Creacion de las botellas
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'dude', frame: 4 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    //  Detectores de teclado
+    cursors = this.input.keyboard.createCursorKeys();
+    space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    
+    bottles = this.physics.add.group();
+    //Creamos la base de las 5 botellas que iran cambiando
+    bottles.create(Phaser.Math.Between(15, 700),Phaser.Math.Between(15, 450), 'potion'  );
+    bottles.create(Phaser.Math.Between(15, 700),Phaser.Math.Between(15, 450), 'potion'  );
+    bottles.create(Phaser.Math.Between(15, 700),Phaser.Math.Between(15, 450), 'potion'  );
+    bottles.create(Phaser.Math.Between(15, 700),Phaser.Math.Between(15, 450), 'potion'  );
+    bottles.create(Phaser.Math.Between(15, 700),Phaser.Math.Between(15, 450), 'potion'  );
+    
+    bottles.children.iterate(function (child) { 
+        //Bounce de las botellas
+        child.setBounceY(0.4);
+        child.setBounceX(1.0);
+         
+    });
+
+    enemies = this.physics.add.group(); 
+
+    //  Score
+    scoreText = this.add.text(88, 22, '0', { fontFamily: 'Georgia',fontSize: '30px', fill: '#000' });
+
+    //  Colliders 
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(bottles, platforms); 
+    this.physics.add.collider(enemies, platforms);
+   
+    // Creacion y movimiento de enemigos
+    var head = enemies.create(360, 550, 'zombie');
+    head.setBounce(1);
+    head.setCollideWorldBounds(true);
+    head.setVelocity(Phaser.Math.Between(100, 500), 20);
+    var head2 = enemies.create(380, 550, 'zombie');
+    head2.setBounce(1);
+    head2.setCollideWorldBounds(true);
+    head2.setVelocity(Phaser.Math.Between(100, 500), 20);
+
+    var skeleton1 = enemies.create(712, 521, 'enemigo2');
+    skeleton1.setBounceX(1);
+    skeleton1.setCollideWorldBounds(true);
+    skeleton1.setVelocity(50);
+
+    var skeleton2 = enemies.create(490, 480, 'enemigo1');
+    skeleton2.setBounceX(1);
+    skeleton2.setCollideWorldBounds(true);
+    skeleton2.setVelocity(150);
+
+    var skeleton3 = enemies.create(115, 350, 'enemigo1');
+    skeleton3.setBounceX(1);
+    skeleton3.setCollideWorldBounds(true);
+    skeleton3.setVelocity(50);
+
+    
+    var skeleton4 = enemies.create(425, 220, 'enemigo2');
+    skeleton4.setBounceX(1);
+    skeleton4.setCollideWorldBounds(true);
+    skeleton4.setVelocity(150);
+
+    
+    var skeleton5 = enemies.create(565, 340, 'enemigo2');
+    skeleton5.setBounceX(1);
+    skeleton5.setCollideWorldBounds(true);
+    skeleton5.setVelocity(40);
+     
+    this.physics.add.overlap(player, bottles, collectBottle, null, this);
+
+    this.physics.add.collider(player, enemies, hitBomb, null, this);
+}
+
+function update ()
+{
+    if (gameOver)
+    {
+        window.location.reload(false); 
+    }
+
+    if (cursors.left.isDown)
+    {
+        player.setVelocityX(-160);
+
+        player.anims.play('left', true);
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setVelocityX(160);
+
+        player.anims.play('right', true);
+    }
+    else
+    {
+        
+        player.setVelocityX(0);
+
+        player.anims.play('turn');
+    }
+    
+    if ((cursors.up.isDown || space.isDown) && player.body.touching.down)
+    {
+        
+        player.setVelocityY(-230);
+    }
+}
+
+function collectBottle (player, bottle)
+{
+    bottle.disableBody(true, true);
+
+    // Añadir y actualizar contador
+    score += 1;
+    scoreText.setText(score);
+
+    if (bottles.countActive(true) === 0)
+    {
+        bottles.children.iterate(function (child) {
+
+         child.enableBody(true, Phaser.Math.Between(15, 700), Phaser.Math.Between(15, 530), true, true);
+
+        });
+    }
+}
+
+function hitBomb (player, bomb)
+{
+    this.physics.pause();
+    player.setTint(0xff0000);
+    player.anims.play('turn');
+    gameOver = true;
+}
+
+</script>
+
+</body>
+</html>
